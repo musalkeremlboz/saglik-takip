@@ -9,6 +9,7 @@ import { SUPPLEMENTS, B6_UPPER_LIMIT } from '../src/data/supplements';
 import {
   getTraining, LADDERS, WEEKLY_SPLIT, SESSIONS, setsForDay,
   FIRST_SESSION_DAY, GATE_DAY, ACTIVATION_DAYS, START_STEP, HITS_TO_ADVANCE,
+  getBlockItems, itemKey,
 } from '../src/data/training';
 
 let fail = 0;
@@ -155,6 +156,52 @@ check('basari-basarisiz-basari -> ayni basamak',
   simulate('itis', [true, false, true]) === START_STEP.itis);
 check('Tavanda kaliyor (10 basari)',
   simulate('squat', Array(10).fill(true)) === LADDERS.find(l => l.id === 'squat')!.steps.length - 1);
+
+console.log('\n== Blok ici hareket listeleri ==');
+let allOk = true, emptyBlocks: string[] = [];
+for (let d = 1; d <= 30; d++) {
+  const t = getTraining(d);
+  if (!t || t.rest) continue;
+  for (const b of t.blocks) {
+    const items = getBlockItems(b, d, t);
+    if (items.length === 0) { allOk = false; emptyBlocks.push(`gun ${d} blok ${b}`); }
+  }
+}
+check('Her blogun hareket listesi dolu', allOk, emptyBlocks.slice(0, 3).join(', '));
+check('M blogu 9 hareket', getBlockItems('M', 1, getTraining(1)).length === 9);
+check('N blogu 3 hareket', getBlockItems('N', 1, getTraining(1)).length === 3);
+check('K blogu 4 hareket', getBlockItems('K', 5, getTraining(5)).length === 4);
+check('W blogu 3 adim (hazirlik+yuruyus+soguma)',
+  getBlockItems('W', 2, getTraining(2)).length === 3);
+check('W blogu gunun suresini yansitiyor',
+  getBlockItems('W', 10, getTraining(10))[1].dose.includes('25'));
+check('W blogu nabiz tavanini yansitiyor',
+  getBlockItems('W', 17, getTraining(17))[1].dose.includes('100'));
+check('itemKey benzersiz', itemKey('M', 0) !== itemKey('M', 1) && itemKey('M', 0) !== itemKey('N', 0));
+
+// Otomatik blok tamamlama mantığı
+function completeSim(total: number) {
+  let done: string[] = [];
+  for (let i = 0; i < total; i++) {
+    done = [...done, itemKey('M', i)];
+    const checked = Array.from({ length: total }, (_, n) => itemKey('M', n)).filter(k => done.includes(k)).length;
+    if (checked === total && !done.includes('M')) done = [...done, 'M'];
+  }
+  return done.includes('M');
+}
+check('Tum hareketler bitince blok otomatik tiklenir', completeSim(9));
+// Eksik hareket bırakıldığında blok tiklenmemeli
+function partialSim(total: number, skipIndex: number) {
+  let done: string[] = [];
+  for (let i = 0; i < total; i++) {
+    if (i === skipIndex) continue;
+    done = [...done, itemKey('M', i)];
+    const checked = Array.from({ length: total }, (_, n) => itemKey('M', n)).filter(k => done.includes(k)).length;
+    if (checked === total && !done.includes('M')) done = [...done, 'M'];
+  }
+  return done.includes('M');
+}
+check('Eksik hareket varken blok tiklenmez', partialSim(9, 4) === false);
 
 console.log(fail === 0 ? '\n✅ TÜM TESTLER GEÇTİ\n' : `\n❌ ${fail} TEST BAŞARISIZ\n`);
 if (fail > 0) process.exit(1);

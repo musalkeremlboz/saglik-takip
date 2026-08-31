@@ -153,6 +153,62 @@ export const WALK_RULES = [
   'Sonrasında oturarak 5 dk soğuma, sonra YAVAŞÇA ayağa kalk.',
 ];
 
+
+/* ─────────── BLOK İÇİ HAREKET LİSTESİ ─────────── */
+
+export interface BlockItem {
+  tr: string;
+  en?: string;
+  dose: string;
+  note?: string;
+}
+
+/**
+ * Yürüyüş bloğu da adımlara bölünür — plandaki güvenlik kuralları
+ * (elektrolit, yakın rota, oturarak soğuma) böylece atlanamaz hale gelir.
+ */
+export function walkSteps(min: number, pulseCap?: number): BlockItem[] {
+  return [
+    {
+      tr: 'Çıkış hazırlığı',
+      dose: 'elektrolit + telefon + konum',
+      note: 'Yanında elektrolitli su, konum paylaşımı açık, birine "çıkıyorum" de.',
+    },
+    {
+      tr: 'Yürüyüş',
+      en: 'Walk',
+      dose: `${min} dk${pulseCap ? ` · nabız ≤ ${pulseCap}` : ''}`,
+      note: `Yakın halka rota — 5 dakikada eve dönebileceğin mesafe. Yorgunsan 2 × ${Math.round(min / 2)} dk böl. 12:00-16:00 arası çıkma.`,
+    },
+    {
+      tr: 'Soğuma',
+      dose: 'oturarak 5 dk',
+      note: 'Sonra YAVAŞÇA ayağa kalk — hızlı kalkarsan göz kararır.',
+    },
+  ];
+}
+
+/** O gün, o blokta yapılacak hareketlerin listesi. */
+export function getBlockItems(block: BlockId, _day: number, t?: TrainingDay | null): BlockItem[] {
+  switch (block) {
+    case 'W':
+      return walkSteps(t?.walkMin ?? 15, t?.pulseCap);
+    case 'M':
+      return M_BLOCK.map((x) => ({ tr: x.tr, en: x.en, dose: x.dose }));
+    case 'N':
+      return N_BLOCK.map((x) => ({ tr: x.tr, en: x.en, dose: x.dose, note: x.when }));
+    case 'K':
+      return K_BLOCK.map((x) => ({ tr: x.tr, en: x.en, dose: x.dose, note: x.note }));
+    default:
+      return [];
+  }
+}
+
+/** Kayıt anahtarı — blok + hareket indeksi. */
+export function itemKey(block: string, i: number): string {
+  return `${block}:${i}`;
+}
+
 /* ─────────── EYLÜL GÜN GÜN ─────────── */
 
 export interface TrainingDay {

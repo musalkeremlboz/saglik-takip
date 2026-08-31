@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
-  BLOCKS, getTraining, M_BLOCK, M_RULE, N_BLOCK, N_RULE, K_BLOCK, K_RULE,
-  WALK_RULES, LADDERS, SESSIONS, WEEKLY_SPLIT, RETURN_GATE,
+  BLOCKS, getTraining, M_RULE, N_RULE, K_RULE,
+  LADDERS, SESSIONS, WEEKLY_SPLIT, RETURN_GATE,
   ACTIVATION_DAYS, GATE_DAY, FIRST_SESSION_DAY, setsForDay,
-  RED_LINES_FAST, RED_LINES_STOP, START_STEP, HITS_TO_ADVANCE, type BlockId,
+  RED_LINES_FAST, RED_LINES_STOP, START_STEP, HITS_TO_ADVANCE,
+  getBlockItems, itemKey, type BlockId,
 } from '../data/training';
 import { getPhase } from '../data/phases';
 import { dayKey, dateFromDay, formatDate } from '../lib/date';
@@ -63,6 +64,29 @@ export default function Training({ day }: { day: number }) {
     if (navigator.vibrate) navigator.vibrate(8);
   }, [key]);
 
+  /**
+   * Blok içi hareket işaretleme.
+   * Kural: son hareket de işaretlenince BLOK OTOMATİK tamamlanır;
+   * işaretli hareket geri alınırsa blok da otomatik açılır.
+   * Böylece "blok tikli ama içi boş" gibi tutarsız bir durum oluşamaz.
+   */
+  const tapItem = useCallback(async (block: BlockId, i: number, total: number) => {
+    const k = itemKey(block, i);
+    const has = done.includes(k);
+    let next = has ? done.filter((x) => x !== k) : [...done, k];
+
+    const checked = Array.from({ length: total }, (_, n) => itemKey(block, n))
+      .filter((ik) => next.includes(ik)).length;
+    const complete = checked === total;
+
+    if (complete && !next.includes(block)) next = [...next, block];
+    if (!complete && next.includes(block)) next = next.filter((x) => x !== block);
+
+    setDone(next);
+    await saveTrainingEntry({ dayKey: key, done: next, walkMin: walk, postPulse, neuroOk });
+    if (navigator.vibrate) navigator.vibrate(complete && !has ? [10, 40, 10] : 8);
+  }, [done, key, walk, postPulse, neuroOk]);
+
   const persist = (patch: Partial<{ walkMin: number; postPulse: number; neuroOk: boolean }>) => {
     const merged = { walkMin: walk, postPulse, neuroOk, ...patch };
     setWalk(merged.walkMin); setPostPulse(merged.postPulse); setNeuroOk(merged.neuroOk);
@@ -99,26 +123,55 @@ export default function Training({ day }: { day: number }) {
           ) : (
             <>
               <div className="section-title">Bugünün blokları</div>
-              <div className="card">
-                {t.blocks.map((b: BlockId) => {
-                  const meta = BLOCKS[b];
-                  const isDone = done.includes(b);
-                  const detail =
-                    b === 'W' ? `${t.walkMin} dk${t.pulseCap ? ` · nabız ≤ ${t.pulseCap}` : ''}` :
-                    b === 'M' ? `${t.mMin ?? 10} dk mobilite` :
-                    b === 'N' ? '5 dk nefes' : '~6 dk · setler arası 90 sn';
-                  return (
-                    <div key={b} className={`item${isDone ? ' done' : ''}`}>
-                      <span className="item-time" style={{ color: meta.color, fontWeight: 700 }}>{meta.short}</span>
+              {t.blocks.map((b: BlockId) => {
+                const meta = BLOCKS[b];
+                const items = getBlockItems(b, day, t);
+                const doneCount = items.filter((_, i) => done.includes(itemKey(b, i))).length;
+                const isDone = done.includes(b);
+                const detail =
+                  b === 'W' ? `${t.walkMin} dk${t.pulseCap ? ` · nabız ≤ ${t.pulseCap}` : ''}` :
+                  b === 'M' ? `${t.mMin ?? 10} dk mobilite` :
+                  b === 'N' ? '5 dk nefes' : '~6 dk · setler arası 90 sn';
+                return (
+                  <div className="card" key={b} style={{ marginBottom: 10 }}>
+                    {/* Blok başlığı — tik hareketlerden otomatik gelir, elle de basılabilir */}
+                    <div className={`item${isDone ? ' done' : ''}`} style={{ paddingTop: 0 }}>
+                      <span className="item-time" style={{ color: meta.color, fontWeight: 700, fontSize: 13 }}>
+                        {meta.short}
+                      </span>
                       <div className="item-body">
-                        <div className="item-label">{meta.name}</div>
-                        <div className="item-note">{detail}</div>
+                        <div className="item-label" style={{ fontWeight: 600 }}>{meta.name}</div>
+                        <div className="item-note">
+                          {detail} · <span style={{ color: doneCount === items.length ? 'var(--ok)' : undefined }}>
+                            {doneCount}/{items.length}
+                          </span>
+                        </div>
                       </div>
                       <button className={`tick ${isDone ? 'full' : 'none'}`} onClick={() => tap(b)}>✓</button>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {/* Blok içi hareketler */}
+                    {items.map((it, i) => {
+                      const ik = itemKey(b, i);
+                      const checked = done.includes(ik);
+                      return (
+                        <div key={ik} className={`item${checked ? ' done' : ''}`}
+                          style={{ paddingLeft: 42, minHeight: 44 }}>
+                          <div className="item-body">
+                            <div className="item-label" style={{ fontSize: 13.5 }}>
+                              {it.tr} <span className="muted" style={{ fontSize: 12 }}>· {it.dose}</span>
+                            </div>
+                            {it.note && <div className="item-note">{it.note}</div>}
+                          </div>
+                          <button className={`tick ${checked ? 'full' : 'none'}`}
+                            onClick={() => tapItem(b, i, items.length)}
+                            aria-label={it.tr}>✓</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
               {t.note && <div className="alert" style={{ marginTop: 10 }}><b>{t.note}</b></div>}
             </>
           )}
@@ -196,18 +249,46 @@ export default function Training({ day }: { day: number }) {
             </>
           )}
           <div className="section-title">Serbest hareket</div>
-          <div className="card">
-            {(['W', 'M', 'N'] as BlockId[]).map((b) => {
-              const isDone = done.includes(b);
-              return (
-                <div key={b} className={`item${isDone ? ' done' : ''}`}>
-                  <span className="item-time" style={{ color: BLOCKS[b].color, fontWeight: 700 }}>{BLOCKS[b].short}</span>
-                  <div className="item-body"><div className="item-label">{BLOCKS[b].name}</div></div>
+          {(['W', 'M', 'N'] as BlockId[]).map((b) => {
+            const items = getBlockItems(b, day, { blocks: [], walkMin: 15 });
+            const doneCount = items.filter((_, i) => done.includes(itemKey(b, i))).length;
+            const isDone = done.includes(b);
+            return (
+              <div className="card" key={b} style={{ marginBottom: 10 }}>
+                <div className={`item${isDone ? ' done' : ''}`} style={{ paddingTop: 0 }}>
+                  <span className="item-time" style={{ color: BLOCKS[b].color, fontWeight: 700, fontSize: 13 }}>
+                    {BLOCKS[b].short}
+                  </span>
+                  <div className="item-body">
+                    <div className="item-label" style={{ fontWeight: 600 }}>{BLOCKS[b].name}</div>
+                    <div className="item-note">
+                      <span style={{ color: doneCount === items.length ? 'var(--ok)' : undefined }}>
+                        {doneCount}/{items.length}
+                      </span>
+                    </div>
+                  </div>
                   <button className={`tick ${isDone ? 'full' : 'none'}`} onClick={() => tap(b)}>✓</button>
                 </div>
-              );
-            })}
-          </div>
+                {items.map((it, i) => {
+                  const ik = itemKey(b, i);
+                  const checked = done.includes(ik);
+                  return (
+                    <div key={ik} className={`item${checked ? ' done' : ''}`}
+                      style={{ paddingLeft: 42, minHeight: 44 }}>
+                      <div className="item-body">
+                        <div className="item-label" style={{ fontSize: 13.5 }}>
+                          {it.tr} <span className="muted" style={{ fontSize: 12 }}>· {it.dose}</span>
+                        </div>
+                        {it.note && <div className="item-note">{it.note}</div>}
+                      </div>
+                      <button className={`tick ${checked ? 'full' : 'none'}`}
+                        onClick={() => tapItem(b, i, items.length)} aria-label={it.tr}>✓</button>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </>
       )}
 
@@ -351,27 +432,13 @@ export default function Training({ day }: { day: number }) {
         })}
       </div>
 
-      {/* ═══ BLOK İÇERİKLERİ (oruç dönemi) ═══ */}
-      {isFast && (
-        <>
-          <Detail title="M Bloğu — Mobilite" rule={M_RULE}
-            rows={M_BLOCK.map((x) => [x.tr, x.dose, x.en])} />
-          <Detail title="N Bloğu — Nefes" rule={N_RULE}
-            rows={N_BLOCK.map((x) => [x.tr, x.dose, x.when])} />
-          {day <= 14 && (
-            <Detail title="K Bloğu — Mikro doz" rule={K_RULE}
-              rows={K_BLOCK.map((x) => [x.tr, x.dose, x.note])} />
-          )}
-          <div className="section-title">Yürüyüş kuralları</div>
-          <div className="card">
-            {WALK_RULES.map((r, i) => (
-              <div key={i} className="item" style={{ minHeight: 0 }}>
-                <span className="item-time">·</span>
-                <div className="item-body"><div className="item-label" style={{ fontSize: 13 }}>{r}</div></div>
-              </div>
-            ))}
-          </div>
-        </>
+      {/* Blok kuralları — hareketler yukarıda listelendiği için burada sadece kurallar */}
+      {isFast && !t?.rest && (
+        <div className="muted" style={{ fontSize: 11.5, lineHeight: 1.5, marginTop: 12 }}>
+          {t?.blocks.includes('M') && <p style={{ margin: '0 0 6px' }}><b>M:</b> {M_RULE}</p>}
+          {t?.blocks.includes('N') && <p style={{ margin: '0 0 6px' }}><b>N:</b> {N_RULE}</p>}
+          {t?.blocks.includes('K') && <p style={{ margin: '0 0 6px' }}><b>K:</b> {K_RULE}</p>}
+        </div>
       )}
 
       <div className="section-title" style={{ color: 'var(--danger)' }}>Kırmızı çizgiler</div>
@@ -397,30 +464,6 @@ export default function Training({ day }: { day: number }) {
           fontSize: 13, textAlign: 'center', zIndex: 50,
           boxShadow: '0 6px 24px rgba(0,0,0,.4)',
         }}>{toast}</div>
-      )}
-    </>
-  );
-}
-
-function Detail({ title, rule, rows }: { title: string; rule: string; rows: (string | undefined)[][] }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <div className="section-title" style={{ cursor: 'pointer' }} onClick={() => setOpen(!open)}>
-        {title} {open ? '▴' : '▾'}
-      </div>
-      {open && (
-        <div className="card">
-          {rows.map((r, i) => (
-            <div key={i} className="item" style={{ minHeight: 0 }}>
-              <div className="item-body">
-                <div className="item-label" style={{ fontSize: 13.5 }}>{r[0]}</div>
-                <div className="item-note">{r[1]}{r[2] ? ` · ${r[2]}` : ''}</div>
-              </div>
-            </div>
-          ))}
-          <div className="muted" style={{ fontSize: 11.5, lineHeight: 1.45, marginTop: 8 }}>{rule}</div>
-        </div>
       )}
     </>
   );
