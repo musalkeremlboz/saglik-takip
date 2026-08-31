@@ -17,6 +17,30 @@ export interface CheckEntry {
   updatedAt: number;
 }
 
+export interface TrainingEntry {
+  dayKey: string;
+  /** Yapılan bloklar: 'W' | 'M' | 'N' | 'K' veya seans id'si */
+  done: string[];
+  /** Yürüyüş gerçekte kaç dakika */
+  walkMin?: number;
+  /** Yürüyüş sonrası nabız */
+  postPulse?: number;
+  /** Nörolojik kontrol geçildi mi (Gün 15+) */
+  neuroOk?: boolean;
+  note?: string;
+  updatedAt: number;
+}
+
+export interface LadderProgress {
+  /** hareket merdiveni id'si: itis, cekis, squat, mentese, govde */
+  ladderId: string;
+  /** 0-tabanlı basamak indeksi */
+  step: number;
+  /** Üst tekrar sınırına form bozulmadan ulaşılan ardışık antrenman sayısı */
+  hits: number;
+  updatedAt: number;
+}
+
 export interface VitalsEntry {
   dayKey: string;
   weight?: number;
@@ -44,25 +68,47 @@ interface HealthDB extends DBSchema {
   checks: { key: string; value: CheckEntry; indexes: { 'by-day': string } };
   vitals: { key: string; value: VitalsEntry };
   selfcheck: { key: string; value: SelfCheckEntry };
+  training: { key: string; value: TrainingEntry };
+  ladder: { key: string; value: LadderProgress };
   outbox: { key: number; value: { id?: number; table: string; payload: unknown; queuedAt: number } };
   meta: { key: string; value: unknown };
 }
 
 const DB_NAME = 'saglik-takip';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<HealthDB>> | null = null;
 
 export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<HealthDB>(DB_NAME, DB_VERSION, {
+      // ⚠️ Sürüm yükseltmede (v1→v2) mevcut store'lar YENİDEN YARATILAMAZ —
+      // createObjectStore ikinci kez çağrılırsa ConstraintError fırlatır ve
+      // uygulama tamamen açılmaz. Her store varlık kontrolünden geçer.
       upgrade(db) {
-        const checks = db.createObjectStore('checks', { keyPath: 'id' });
-        checks.createIndex('by-day', 'dayKey');
-        db.createObjectStore('vitals', { keyPath: 'dayKey' });
-        db.createObjectStore('selfcheck', { keyPath: 'dayKey' });
-        db.createObjectStore('outbox', { keyPath: 'id', autoIncrement: true });
-        db.createObjectStore('meta');
+        if (!db.objectStoreNames.contains('checks')) {
+          const checks = db.createObjectStore('checks', { keyPath: 'id' });
+          checks.createIndex('by-day', 'dayKey');
+        }
+        if (!db.objectStoreNames.contains('vitals')) {
+          db.createObjectStore('vitals', { keyPath: 'dayKey' });
+        }
+        if (!db.objectStoreNames.contains('selfcheck')) {
+          db.createObjectStore('selfcheck', { keyPath: 'dayKey' });
+        }
+        if (!db.objectStoreNames.contains('outbox')) {
+          db.createObjectStore('outbox', { keyPath: 'id', autoIncrement: true });
+        }
+        if (!db.objectStoreNames.contains('meta')) {
+          db.createObjectStore('meta');
+        }
+        // v2 — antrenman
+        if (!db.objectStoreNames.contains('training')) {
+          db.createObjectStore('training', { keyPath: 'dayKey' });
+        }
+        if (!db.objectStoreNames.contains('ladder')) {
+          db.createObjectStore('ladder', { keyPath: 'ladderId' });
+        }
       },
     });
   }
@@ -143,4 +189,37 @@ export async function requestPersistence(): Promise<boolean> {
   if (!navigator.storage?.persist) return false;
   if (await navigator.storage.persisted()) return true;
   return navigator.storage.persist();
+}
+
+/* ─────────── ANTRENMAN ─────────── */
+
+export async function getTrainingEntry(dayKey: string): Promise<TrainingEntry | undefined> {
+  return (await getDB()).get('training', dayKey);
+}
+
+export async function saveTrainingEntry(e: Omit<TrainingEntry, 'updatedAt'>): Promise<void> {
+  await (await getDB()).put('training', { ...e, updatedAt: Date.now() });
+}
+
+/** Bir bloğu aç/kapa — en sık yapılan işlem, tek çağrıda halleder. */
+export async function toggleBlock(dayKey: string, blockId: string): Promise<string[]> {
+  const db = await getDB();
+  const cur = await db.get('training', dayKey);
+  const done = cur?.done ?? [];
+  const next = done.includes(blockId)
+    ? done.filter((b) => b !== blockId)
+    : [...done, blockId];
+  await db.put('training', { ...(cur ?? { dayKey }), dayKey, done: next, updatedAt: Date.now() });
+  return next;
+}
+
+/* ─────────── MERDİVEN İLERLEMESİ ─────────── */
+
+export async function getAllLadderProgress(): Promise<Record<string, LadderProgress>> {
+  const rows = await (await getDB()).getAll('ladder');
+  return Object.fromEntries(rows.map((r) => [r.ladderId, r]));
+}
+
+export async function setLadderStep(ladderId: string, step: number): Promise<void> {
+  await (await getDB()).put('ladder', { ladderId, step, hits: 0, updatedAt: Date.now() });
 }

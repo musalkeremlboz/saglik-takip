@@ -6,6 +6,10 @@ import { getPhase, getFastWeek } from '../src/data/phases';
 import { getDailyPlan } from '../src/data/daily-plan';
 import { dayFromDate, dateFromDay, dayKey, shiftOf } from '../src/lib/date';
 import { SUPPLEMENTS, B6_UPPER_LIMIT } from '../src/data/supplements';
+import {
+  getTraining, LADDERS, WEEKLY_SPLIT, SESSIONS, setsForDay,
+  FIRST_SESSION_DAY, GATE_DAY, ACTIVATION_DAYS,
+} from '../src/data/training';
 
 let fail = 0;
 function check(name: string, cond: boolean, detail = '') {
@@ -80,6 +84,46 @@ check('Elektrolit "düşürme" uyarısı var',
   rf.some(i => i.key === 'elektrolit-refeed' && /DÜŞÜRME/.test(i.label)));
 check('B Complex "artırma" uyarısı var',
   rf.some(i => i.key === 'b-complex' && /ARTIRMA/.test(i.label)));
+
+console.log('\n== Antrenman: Eylül ==');
+const sept = Array.from({ length: 30 }, (_, i) => i + 1);
+check('30 günün hepsinde plan var', sept.every(d => getTraining(d) !== null));
+check('K Bloğu sadece gün ≤14',
+  sept.every(d => !(getTraining(d)?.blocks.includes('K')) || d <= 14));
+check('Gün 15+ nörolojik kontrol açık',
+  sept.filter(d => d >= 15).every(d => getTraining(d)?.neuro === true));
+check('Nabız tavanı H1-2 = 110',
+  [2,4,5,7,8,10,12,14].every(d => (getTraining(d)?.pulseCap ?? 110) === 110));
+check('Nabız tavanı H3-4 = 100',
+  [15,17,19,21,22,24,26].every(d => getTraining(d)?.pulseCap === 100));
+check('Gün 30 hareket yok', getTraining(30)?.rest === true);
+check('Yürüyüş zirvesi 25 dk (gün 10,12)',
+  getTraining(10)?.walkMin === 25 && getTraining(12)?.walkMin === 25);
+check('Hafta 4 yürüyüş azalıyor', (getTraining(24)?.walkMin ?? 99) <= 15);
+
+console.log('\n== Antrenman: rampa — 15 gunluk refeeding ==');
+check('Refeeding boyunca seans yok', FIRST_SESSION_DAY > 45, `ilk seans gün ${FIRST_SESSION_DAY}`);
+check('Kapı günü = refeeding bitişi', GATE_DAY === 46);
+check('Aktivasyon refeeding içinde', ACTIVATION_DAYS.every(d => d >= 31 && d <= 45));
+check('İlk seans 17 Ekim Cumartesi',
+  dateFromDay(FIRST_SESSION_DAY).getDate() === 17 && dateFromDay(FIRST_SESSION_DAY).getDay() === 6);
+check('İlk hafta 2 set', setsForDay(FIRST_SESSION_DAY) === 2);
+check('İkinci hafta 3 set', setsForDay(FIRST_SESSION_DAY + 7) === 3);
+check('Seans öncesi 0 set', setsForDay(40) === 0);
+
+console.log('\n== Haftalık bölünme ==');
+check('Perşembe dinlenme (eve 23:00)', WEEKLY_SPLIT[3] === 'rest');
+check('Çar+Cum mikro doz', WEEKLY_SPLIT[2] === 'micro' && WEEKLY_SPLIT[4] === 'micro');
+check('Pzt+Salı uzun seans (izinli)', WEEKLY_SPLIT[0] === 'A' && WEEKLY_SPLIT[1] === 'B');
+
+console.log('\n== Merdivenler ==');
+check('5 merdiven var', LADDERS.length === 5);
+check('Her merdivende ≥4 basamak', LADDERS.every(l => l.steps.length >= 4));
+check('Çekiş merdiveninde güvenlik uyarısı var',
+  !!LADDERS.find(l => l.id === 'cekis')?.warning);
+check('Şınavda negatif köprüsü var', !!LADDERS.find(l => l.id === 'itis')?.bridge);
+check('Seansların hepsi geçerli merdivene işaret ediyor',
+  SESSIONS.every(s => s.movements.every(m => LADDERS.some(l => l.id === m.ladder))));
 
 console.log(fail === 0 ? '\n✅ TÜM TESTLER GEÇTİ\n' : `\n❌ ${fail} TEST BAŞARISIZ\n`);
 if (fail > 0) process.exit(1);
