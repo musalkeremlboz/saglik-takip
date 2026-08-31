@@ -8,6 +8,7 @@ import {
 } from '../data/training';
 import { getPhase } from '../data/phases';
 import { dayKey, dateFromDay, formatDate } from '../lib/date';
+import ExerciseImage from '../components/ExerciseImage';
 import {
   getTrainingEntry, toggleBlock, saveTrainingEntry,
   getAllLadderProgress, reportLadderResult, type LadderProgress,
@@ -162,6 +163,7 @@ export default function Training({ day }: { day: number }) {
                               {it.tr} <span className="muted" style={{ fontSize: 12 }}>· {it.dose}</span>
                             </div>
                             {it.note && <div className="item-note">{it.note}</div>}
+                            <ExerciseImage name={it.tr} />
                           </div>
                           <button className={`tick ${checked ? 'full' : 'none'}`}
                             onClick={() => tapItem(b, i, items.length)}
@@ -280,6 +282,7 @@ export default function Training({ day }: { day: number }) {
                           {it.tr} <span className="muted" style={{ fontSize: 12 }}>· {it.dose}</span>
                         </div>
                         {it.note && <div className="item-note">{it.note}</div>}
+                        <ExerciseImage name={it.tr} />
                       </div>
                       <button className={`tick ${checked ? 'full' : 'none'}`}
                         onClick={() => tapItem(b, i, items.length)} aria-label={it.tr}>✓</button>
@@ -335,6 +338,7 @@ export default function Training({ day }: { day: number }) {
                         <div className="item-note">
                           Basamak {prog + 1}/{lad.steps.length} · {sets} × {step.target.split('×')[1]?.trim() ?? step.target}
                         </div>
+                        <ExerciseImage name={step.tr} />
                       </div>
                       <button className={`tick ${isDone ? 'full' : 'none'}`}
                         onClick={() => tap(`${session.id}:${m.ladder}`)}>✓</button>
@@ -400,6 +404,7 @@ export default function Training({ day }: { day: number }) {
                             {s.tr} <span className="muted" style={{ fontWeight: 400 }}>· {s.target}</span>
                           </div>
                           <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{s.how}</div>
+                          {state === 'now' && <ExerciseImage name={s.tr} />}
                         </div>
                       </div>
                     );

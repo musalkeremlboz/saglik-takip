@@ -32,7 +32,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // webp dahil: hareket görselleri de çevrimdışı çalışsın (~514 KB)
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: BASE + 'index.html',
       },
     }),

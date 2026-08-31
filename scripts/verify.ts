@@ -6,6 +6,7 @@ import { getPhase, getFastWeek } from '../src/data/phases';
 import { getDailyPlan } from '../src/data/daily-plan';
 import { dayFromDate, dateFromDay, dayKey, shiftOf } from '../src/lib/date';
 import { SUPPLEMENTS, B6_UPPER_LIMIT } from '../src/data/supplements';
+import { existsSync, readFileSync } from 'node:fs';
 import {
   getTraining, LADDERS, WEEKLY_SPLIT, SESSIONS, setsForDay,
   FIRST_SESSION_DAY, GATE_DAY, ACTIVATION_DAYS, START_STEP, HITS_TO_ADVANCE,
@@ -202,6 +203,36 @@ function partialSim(total: number, skipIndex: number) {
   return done.includes('M');
 }
 check('Eksik hareket varken blok tiklenmez', partialSim(9, 4) === false);
+
+console.log('\n== Hareket gorselleri ==');
+// exercise-images.ts'i ham metin olarak oku (import.meta.env tsx'te yok)
+const imgSrc = readFileSync('src/data/exercise-images.ts', 'utf8');
+const slugs = [...imgSrc.matchAll(/'([^']+)':\s*'([A-Za-z0-9_\-()]+)',/g)]
+  .filter(m => !m[1].includes(' — ') && !m[1].startsWith('G'))
+  .map(m => ({ name: m[1], slug: m[2] }));
+
+check('En az 25 hareket eslesti', slugs.length >= 25, `${slugs.length} adet`);
+
+let missingFiles: string[] = [];
+for (const { slug } of slugs) {
+  for (const i of [0, 1]) {
+    const f = `public/ex/${slug}_${i}.webp`;
+    if (!existsSync(f)) missingFiles.push(f);
+  }
+}
+check('Tum gorsel dosyalari mevcut', missingFiles.length === 0,
+  missingFiles.slice(0, 3).join(', '));
+
+// Görseli olan her hareket adı gerçekten planda geçmeli (yazım hatası yakalar)
+const allNames = new Set<string>();
+for (const l of LADDERS) for (const s of l.steps) allNames.add(s.tr);
+for (let d = 1; d <= 30; d++) {
+  const t = getTraining(d);
+  if (!t || t.rest) continue;
+  for (const b of t.blocks) for (const it of getBlockItems(b, d, t)) allNames.add(it.tr);
+}
+const orphan = slugs.filter(s => !allNames.has(s.name)).map(s => s.name);
+check('Gorsel adlari planla eslesiyor', orphan.length === 0, orphan.slice(0, 3).join(', '));
 
 console.log(fail === 0 ? '\n✅ TÜM TESTLER GEÇTİ\n' : `\n❌ ${fail} TEST BAŞARISIZ\n`);
 if (fail > 0) process.exit(1);
