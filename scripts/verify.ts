@@ -8,7 +8,7 @@ import { dayFromDate, dateFromDay, dayKey, shiftOf } from '../src/lib/date';
 import { SUPPLEMENTS, B6_UPPER_LIMIT } from '../src/data/supplements';
 import {
   getTraining, LADDERS, WEEKLY_SPLIT, SESSIONS, setsForDay,
-  FIRST_SESSION_DAY, GATE_DAY, ACTIVATION_DAYS,
+  FIRST_SESSION_DAY, GATE_DAY, ACTIVATION_DAYS, START_STEP, HITS_TO_ADVANCE,
 } from '../src/data/training';
 
 let fail = 0;
@@ -124,6 +124,37 @@ check('Çekiş merdiveninde güvenlik uyarısı var',
 check('Şınavda negatif köprüsü var', !!LADDERS.find(l => l.id === 'itis')?.bridge);
 check('Seansların hepsi geçerli merdivene işaret ediyor',
   SESSIONS.every(s => s.movements.every(m => LADDERS.some(l => l.id === m.ladder))));
+
+console.log('\n== Baslangic basamaklari (program belirler) ==');
+check('Her merdivenin baslangic basamagi tanimli',
+  LADDERS.every(l => START_STEP[l.id] !== undefined));
+check('Baslangic basamaklari gecerli aralikta',
+  LADDERS.every(l => START_STEP[l.id] >= 0 && START_STEP[l.id] < l.steps.length));
+check('Itis basamak 2 (yuksek egik sinav)', START_STEP.itis === 1);
+check('Squat basamak 1 (sit-to-stand)', START_STEP.squat === 0);
+check('Cekis basamak 2 (kapi kolu)', START_STEP.cekis === 1);
+check('Hicbiri en ust basamaktan baslamiyor',
+  LADDERS.every(l => START_STEP[l.id] < l.steps.length - 1));
+check('Yukseltme icin 2 ardisik basari', HITS_TO_ADVANCE === 2);
+
+// İlerleme mantığını simüle et
+function simulate(ladderId: string, results: boolean[]) {
+  const lad = LADDERS.find(l => l.id === ladderId)!;
+  let step = START_STEP[ladderId], hits = 0;
+  for (const hit of results) {
+    if (hit) {
+      hits += 1;
+      if (hits >= HITS_TO_ADVANCE && step < lad.steps.length - 1) { step += 1; hits = 0; }
+    } else hits = 0;
+  }
+  return step;
+}
+check('2 basari -> 1 basamak yukari', simulate('itis', [true, true]) === START_STEP.itis + 1);
+check('1 basari -> ayni basamak', simulate('itis', [true]) === START_STEP.itis);
+check('basari-basarisiz-basari -> ayni basamak',
+  simulate('itis', [true, false, true]) === START_STEP.itis);
+check('Tavanda kaliyor (10 basari)',
+  simulate('squat', Array(10).fill(true)) === LADDERS.find(l => l.id === 'squat')!.steps.length - 1);
 
 console.log(fail === 0 ? '\n✅ TÜM TESTLER GEÇTİ\n' : `\n❌ ${fail} TEST BAŞARISIZ\n`);
 if (fail > 0) process.exit(1);

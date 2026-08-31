@@ -223,3 +223,38 @@ export async function getAllLadderProgress(): Promise<Record<string, LadderProgr
 export async function setLadderStep(ladderId: string, step: number): Promise<void> {
   await (await getDB()).put('ladder', { ladderId, step, hits: 0, updatedAt: Date.now() });
 }
+
+/**
+ * Seans sonucu bildir — basamak yükseltmeyi UYGULAMA karar verir.
+ * hit=true  : hedef tekrarı form bozulmadan tutturdu -> sayaç artar,
+ *             HITS_TO_ADVANCE'e ulaşınca bir üst basamağa geçer.
+ * hit=false : tutturamadı -> sayaç sıfırlanır (aynı basamakta kalır).
+ * Dönen değer: { step, hits, advanced } — advanced ise arayüz kutlama gösterir.
+ */
+export async function reportLadderResult(
+  ladderId: string,
+  hit: boolean,
+  startStep: number,
+  maxStep: number,
+  hitsToAdvance: number,
+): Promise<{ step: number; hits: number; advanced: boolean }> {
+  const db = await getDB();
+  const cur = await db.get('ladder', ladderId);
+  let step = cur?.step ?? startStep;
+  let hits = cur?.hits ?? 0;
+  let advanced = false;
+
+  if (hit) {
+    hits += 1;
+    if (hits >= hitsToAdvance && step < maxStep) {
+      step += 1;
+      hits = 0;
+      advanced = true;
+    }
+  } else {
+    hits = 0;
+  }
+
+  await db.put('ladder', { ladderId, step, hits, updatedAt: Date.now() });
+  return { step, hits, advanced };
+}

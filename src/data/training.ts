@@ -264,6 +264,28 @@ export const RETURN_GATE = [
   'Nabız ve tansiyon toparlandı',
 ];
 
+/**
+ * BAŞLANGIÇ BASAMAKLARI — program belirler, kullanıcı seçmez.
+ * Kaynak: 03-Egzersiz-Plani.md "Oruçtan yeni çıkmış birinde başlangıç
+ * tahminden BİR BASAMAK AŞAĞI olmalı."
+ * 0-tabanlı indeks.
+ */
+export const START_STEP: Record<string, number> = {
+  itis: 1,      // 2 — Yüksek eğik şınav (tezgâh)
+  cekis: 1,     // 2 — Kapı kolu ters kürek
+  squat: 0,     // 1 — Sandalyeye oturup kalkma
+  mentese: 0,   // 1 — Kalça köprüsü
+  govde: 1,     // 2 — Eğik plank
+};
+
+/**
+ * OTOMATİK BASAMAK YÜKSELTME KURALI
+ * Plan: "Bir basamakta 3 set × üst tekrar sınırına, İKİ ANTRENMAN ÜST ÜSTE,
+ * form bozulmadan ulaştıysan bir üst basamağa geç."
+ * Uygulama bunu kendisi sayar — Musa sadece "hedefi tutturdum" der.
+ */
+export const HITS_TO_ADVANCE = 2;
+
 /** Kaydırılmış Ekim rampası — 15 günlük refeeding'e göre */
 export const ACTIVATION_DAYS = [44, 45];   // 14-15 Ekim
 export const GATE_DAY = 46;                 // 16 Ekim

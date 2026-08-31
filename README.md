@@ -2,7 +2,12 @@
 
 Musa'nın 1 Eylül – 30 Kasım 2026 programının takip uygulaması.
 
-**Canlı:** https://saglik-takip-rose.vercel.app
+**Canlı:** https://musalkeremlboz.github.io/saglik-takip/
+
+> ⚠️ **Neden Vercel değil:** Vercel'in yükleme uçları Türkiye ağından engelli
+> (8 deploy denemesi aynı noktada asıldı; `vercel.com` 200 dönerken yükleme
+> tamamlanmıyor). Yayın GitHub Pages'e alındı, deploy GitHub Actions ile yapılıyor.
+> `npm run verify` workflow'da build kapısı — testler düşerse yayına çıkmaz.
 
 ## Ne yapar
 

@@ -1,15 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   BLOCKS, getTraining, M_BLOCK, M_RULE, N_BLOCK, N_RULE, K_BLOCK, K_RULE,
-  WALK_RULES, LADDERS, LADDER_RULE, SESSIONS, WEEKLY_SPLIT, RETURN_GATE,
+  WALK_RULES, LADDERS, SESSIONS, WEEKLY_SPLIT, RETURN_GATE,
   ACTIVATION_DAYS, GATE_DAY, FIRST_SESSION_DAY, setsForDay,
-  RED_LINES_FAST, RED_LINES_STOP, type BlockId,
+  RED_LINES_FAST, RED_LINES_STOP, START_STEP, HITS_TO_ADVANCE, type BlockId,
 } from '../data/training';
 import { getPhase } from '../data/phases';
 import { dayKey, dateFromDay, formatDate } from '../lib/date';
 import {
   getTrainingEntry, toggleBlock, saveTrainingEntry,
-  getAllLadderProgress, setLadderStep, type LadderProgress,
+  getAllLadderProgress, reportLadderResult, type LadderProgress,
 } from '../db/local';
 
 export default function Training({ day }: { day: number }) {
@@ -21,6 +21,28 @@ export default function Training({ day }: { day: number }) {
   const [neuroOk, setNeuroOk] = useState<boolean | undefined>();
   const [ladders, setLadders] = useState<Record<string, LadderProgress>>({});
   const [openLadder, setOpenLadder] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  /** Basamağı PROGRAM belirler: kayıt yoksa plandaki başlangıç basamağı. */
+  const stepOf = (id: string) => ladders[id]?.step ?? START_STEP[id] ?? 0;
+  const hitsOf = (id: string) => ladders[id]?.hits ?? 0;
+
+  const report = async (ladderId: string, hit: boolean) => {
+    const lad = LADDERS.find((l) => l.id === ladderId)!;
+    const r = await reportLadderResult(
+      ladderId, hit, START_STEP[ladderId] ?? 0, lad.steps.length - 1, HITS_TO_ADVANCE,
+    );
+    setLadders((p) => ({ ...p, [ladderId]: { ladderId, step: r.step, hits: r.hits, updatedAt: Date.now() } }));
+    if (r.advanced) {
+      setToast(`${lad.name}: yeni basamak → ${lad.steps[r.step].tr}`);
+      if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
+    } else if (hit) {
+      setToast(`Kaydedildi · ${HITS_TO_ADVANCE - r.hits} seans sonra basamak yükselir`);
+    } else {
+      setToast('Kaydedildi · aynı basamakta kalıyoruz');
+    }
+    setTimeout(() => setToast(null), 2600);
+  };
 
   useEffect(() => {
     let alive = true;
@@ -221,7 +243,7 @@ export default function Training({ day }: { day: number }) {
                 </div>
                 {session.movements.map((m) => {
                   const lad = LADDERS.find((l) => l.id === m.ladder)!;
-                  const prog = ladders[m.ladder]?.step ?? 0;
+                  const prog = stepOf(m.ladder);
                   const step = lad.steps[Math.min(prog, lad.steps.length - 1)];
                   const isDone = done.includes(`${session.id}:${m.ladder}`);
                   return (
@@ -252,11 +274,14 @@ export default function Training({ day }: { day: number }) {
       {/* ═══ HAREKET MERDİVENLERİ (her zaman görünür) ═══ */}
       <div className="section-title">Hareket merdivenleri</div>
       <div className="muted" style={{ fontSize: 12, marginBottom: 8, lineHeight: 1.45 }}>
-        {LADDER_RULE}
+        Basamağı <b>program belirler</b>, sen seçmezsin. Seans sonrası tek soru var:
+        hedefi tutturdun mu? İki seans üst üste tutturursan bir üst basamağa geçer.
+        Tutturamazsan aynı basamakta kalır — bu gerileme değil, plan böyle.
       </div>
       <div className="card">
         {LADDERS.map((lad) => {
-          const prog = ladders[lad.id]?.step ?? 0;
+          const prog = stepOf(lad.id);
+          const hits = hitsOf(lad.id);
           const open = openLadder === lad.id;
           return (
             <div key={lad.id} style={{ borderBottom: '1px solid var(--border)', paddingBottom: open ? 10 : 0 }}>
@@ -266,30 +291,54 @@ export default function Training({ day }: { day: number }) {
                 <div className="item-body">
                   <div className="item-label">{lad.name}</div>
                   <div className="item-note">
-                    Şu an: <b style={{ color: 'var(--accent)' }}>{lad.steps[prog].tr}</b> · {lad.steps[prog].target}
+                    Basamak {prog + 1}/{lad.steps.length} · <b style={{ color: 'var(--accent)' }}>{lad.steps[prog].tr}</b> · {lad.steps[prog].target}
                   </div>
                 </div>
                 <span className="muted" style={{ fontSize: 15 }}>{open ? '▴' : '▾'}</span>
               </div>
               {open && (
                 <div style={{ paddingLeft: 54 }}>
-                  {lad.steps.map((s, i) => (
-                    <button key={i} className="sc-btn"
-                      style={{
-                        width: '100%', marginBottom: 6,
-                        borderColor: i === prog ? 'var(--accent)' : undefined,
-                        color: i === prog ? 'var(--accent)' : undefined,
-                      }}
-                      onClick={async () => {
-                        await setLadderStep(lad.id, i);
-                        setLadders((p) => ({ ...p, [lad.id]: { ladderId: lad.id, step: i, hits: 0, updatedAt: Date.now() } }));
+                  {/* Basamağı PROGRAM belirler — liste bilgi amaçlı, tıklanmaz. */}
+                  {lad.steps.map((s, i) => {
+                    const state = i < prog ? 'done' : i === prog ? 'now' : 'next';
+                    return (
+                      <div key={i} style={{
+                        display: 'flex', gap: 9, alignItems: 'flex-start',
+                        padding: '7px 0', opacity: state === 'next' ? 0.4 : 1,
                       }}>
-                      <div style={{ textAlign: 'left' }}>
-                        <div style={{ fontSize: 13.5 }}>{i + 1}. {s.tr} <span className="muted">· {s.target}</span></div>
-                        <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{s.how}</div>
+                        <span style={{
+                          fontSize: 12, minWidth: 16, paddingTop: 1,
+                          color: state === 'now' ? 'var(--accent)' : state === 'done' ? 'var(--ok)' : 'var(--fg-dim)',
+                        }}>{state === 'done' ? '✓' : state === 'now' ? '▸' : i + 1}</span>
+                        <div>
+                          <div style={{
+                            fontSize: 13.5,
+                            color: state === 'now' ? 'var(--accent)' : undefined,
+                            fontWeight: state === 'now' ? 600 : 400,
+                          }}>
+                            {s.tr} <span className="muted" style={{ fontWeight: 400 }}>· {s.target}</span>
+                          </div>
+                          <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{s.how}</div>
+                        </div>
                       </div>
-                    </button>
-                  ))}
+                    );
+                  })}
+
+                  {/* Seans sonrası tek soru — basamak kararını uygulama verir. */}
+                  {day >= FIRST_SESSION_DAY && (
+                    <>
+                      <div className="muted" style={{ fontSize: 11.5, margin: '10px 0 6px', lineHeight: 1.45 }}>
+                        Bugünkü seansta <b>{lad.steps[prog].target}</b> hedefini form bozulmadan tutturdun mu?
+                        {hits > 0 && ` · ${HITS_TO_ADVANCE - hits} seans kaldı`}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="sc-btn" style={{ flex: 1, justifyContent: 'center' }}
+                          onClick={() => report(lad.id, true)}>Tutturdum</button>
+                        <button className="sc-btn" style={{ flex: 1, justifyContent: 'center' }}
+                          onClick={() => report(lad.id, false)}>Tutturamadım</button>
+                      </div>
+                    </>
+                  )}
                   {lad.bridge && <div className="alert" style={{ fontSize: 12 }}>{lad.bridge}</div>}
                   {lad.warning && <div className="alert danger" style={{ fontSize: 12 }}>{lad.warning}</div>}
                   <div className="muted" style={{ fontSize: 11.5, lineHeight: 1.45, margin: '8px 0 4px' }}>
@@ -338,6 +387,17 @@ export default function Training({ day }: { day: number }) {
           <div key={i} style={{ fontSize: 12, padding: '3px 0', color: 'var(--danger)', opacity: 0.85 }}>· {r}</div>
         ))}
       </div>
+
+      {toast && (
+        <div style={{
+          position: 'fixed', left: 14, right: 14,
+          bottom: 'calc(var(--tabbar-h) + var(--safe-b) + 14px)',
+          background: 'var(--surface-2)', border: '1px solid var(--accent)',
+          borderRadius: 'var(--r)', padding: '11px 14px',
+          fontSize: 13, textAlign: 'center', zIndex: 50,
+          boxShadow: '0 6px 24px rgba(0,0,0,.4)',
+        }}>{toast}</div>
+      )}
     </>
   );
 }
