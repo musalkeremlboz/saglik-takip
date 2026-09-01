@@ -20,17 +20,17 @@ function check(name: string, cond: boolean, detail = '') {
 }
 
 console.log('\n== Tarih ==');
-check('Gün 1 = 1 Eylül 2026 Salı',
-  dateFromDay(1).getDate() === 1 && dateFromDay(1).getMonth() === 8 && dateFromDay(1).getDay() === 2);
-check('Gün 30 = 30 Eylül Çarşamba',
-  dateFromDay(30).getDate() === 30 && dateFromDay(30).getDay() === 3);
-check('Gün 31 = 1 Ekim Perşembe',
-  dateFromDay(31).getDate() === 1 && dateFromDay(31).getMonth() === 9 && dateFromDay(31).getDay() === 4);
-check('Gün 45 = 15 Ekim (refeeding sonu)',
-  dateFromDay(45).getDate() === 15 && dateFromDay(45).getMonth() === 9);
-check('Gün 46 = 16 Ekim (kilo verme başlar)',
-  dateFromDay(46).getDate() === 16 && dateFromDay(46).getMonth() === 9);
-check('dayKey formatı', dayKey(1) === '2026-09-01', dayKey(1));
+check('Gün 1 = 2 Eylül 2026 Çarşamba',
+  dateFromDay(1).getDate() === 2 && dateFromDay(1).getMonth() === 8 && dateFromDay(1).getDay() === 3);
+check('Gün 30 = 1 Ekim Perşembe',
+  dateFromDay(30).getDate() === 1 && dateFromDay(30).getMonth() === 9 && dateFromDay(30).getDay() === 4);
+check('Gün 31 = 2 Ekim Cuma',
+  dateFromDay(31).getDate() === 2 && dateFromDay(31).getMonth() === 9 && dateFromDay(31).getDay() === 5);
+check('Gün 45 = 16 Ekim (refeeding sonu)',
+  dateFromDay(45).getDate() === 16 && dateFromDay(45).getMonth() === 9);
+check('Gün 46 = 17 Ekim (kilo verme başlar)',
+  dateFromDay(46).getDate() === 17 && dateFromDay(46).getMonth() === 9);
+check('dayKey formatı', dayKey(1) === '2026-09-02', dayKey(1));
 check('dayFromDate tersine çalışıyor', dayFromDate(dateFromDay(17)) === 17);
 
 console.log('\n== Faz sınırları ==');
@@ -45,9 +45,9 @@ check('Gün 18 tiamin kritik bölgede', getFastWeek(18)?.critical === true);
 check('Gün 10 kritik değil', !getFastWeek(10)?.critical);
 
 console.log('\n== Vardiya (Musa beyanı) ==');
-check('1 Eylül Salı → izinli', shiftOf(dateFromDay(1)) === 'izinli');
-check('2 Eylül Çarşamba → geç vardiya', shiftOf(dateFromDay(2)) === 'gec');
-check('1 Ekim Perşembe (refeeding g1) → geç vardiya',
+check('Gün 1 (2 Eylül Çar) → geç vardiya', shiftOf(dateFromDay(1)) === 'gec');
+check('Gün 6 (7 Eylül Pzt) → izinli', shiftOf(dateFromDay(6)) === 'izinli');
+check('Refeeding g1 (2 Ekim Cuma) → geç vardiya',
   shiftOf(dateFromDay(31)) === 'gec');
 
 console.log('\n== Gün aşırı filtre ==');
@@ -107,8 +107,8 @@ console.log('\n== Antrenman: rampa — 15 gunluk refeeding ==');
 check('Refeeding boyunca seans yok', FIRST_SESSION_DAY > 45, `ilk seans gün ${FIRST_SESSION_DAY}`);
 check('Kapı günü = refeeding bitişi', GATE_DAY === 46);
 check('Aktivasyon refeeding içinde', ACTIVATION_DAYS.every(d => d >= 31 && d <= 45));
-check('İlk seans 17 Ekim Cumartesi',
-  dateFromDay(FIRST_SESSION_DAY).getDate() === 17 && dateFromDay(FIRST_SESSION_DAY).getDay() === 6);
+check('İlk seans 18 Ekim Pazar',
+  dateFromDay(FIRST_SESSION_DAY).getDate() === 18 && dateFromDay(FIRST_SESSION_DAY).getDay() === 0);
 check('İlk hafta 2 set', setsForDay(FIRST_SESSION_DAY) === 2);
 check('İkinci hafta 3 set', setsForDay(FIRST_SESSION_DAY + 7) === 3);
 check('Seans öncesi 0 set', setsForDay(40) === 0);

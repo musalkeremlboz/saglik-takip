@@ -6,9 +6,9 @@
  *   Klinik denetim sonradan refeeding'i 15 GÜNE çıkardı (1-15 Ekim).
  *   10 Ekim artık refeeding'in ORTASI — elektrolit kayması sürüyor.
  *   → Ekim rampası 7 gün kaydırıldı:
- *       Aktivasyon Seti  : gün 44-45 (14-15 Ekim, refeeding son 2 günü)
- *       5 şartlı kapı    : gün 46   (16 Ekim, refeeding biter)
- *       İlk gerçek seans : gün 47   (17 Ekim Cmt) = C seansı (en kısa)
+ *       Aktivasyon Seti  : gün 44-45 (15-16 Ekim, refeeding son 2 günü)
+ *       5 şartlı kapı    : gün 46   (17 Ekim, refeeding biter)
+ *       İlk gerçek seans : gün 47   (18 Ekim Paz) = C seansı (en kısa)
  *       Sonra Pzt=A, Salı=B → normal bölünme
  */
 

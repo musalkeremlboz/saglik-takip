@@ -10,14 +10,17 @@ export interface Phase {
   id: PhaseId;
   name: string;
   short: string;
-  startDay: number; // program günü (1 = 1 Eylül 2026)
+  startDay: number; // program günü (1 = 2 Eylül 2026)
   endDay: number;
   color: string;
   description: string;
 }
 
-/** Program başlangıcı: 1 Eylül 2026, Salı. Yerel saat (Europe/Istanbul). */
-export const START_DATE = new Date(2026, 8, 1);
+/**
+ * Program başlangıcı: 2 EYLÜL 2026, Çarşamba. Yerel saat (Europe/Istanbul).
+ * (1 Eylül'den kaydırıldı — Musa o gün başlayamadı, 2026-09-01 kararı.)
+ */
+export const START_DATE = new Date(2026, 8, 2);
 
 export const PHASES: Phase[] = [
   {
