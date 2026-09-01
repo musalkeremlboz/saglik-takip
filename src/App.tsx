@@ -8,7 +8,10 @@ import { requestPersistence } from './db/local';
 type Tab = 'today' | 'training' | 'vitals';
 
 export default function App() {
-  const today = Math.max(1, Math.min(91, dayFromDate()));
+  const rawDay = dayFromDate();
+  /** Program başlamadan önce (rawDay < 1) geri sayım gösterilir, Gün 1 sıkıştırılmaz. */
+  const notStarted = rawDay < 1;
+  const today = Math.max(1, Math.min(91, rawDay));
   const [tab, setTab] = useState<Tab>('today');
   const [day, setDay] = useState(today);
 
@@ -19,6 +22,13 @@ export default function App() {
   return (
     <div className="app">
       <div className="scroll">
+        {notStarted && (
+          <div className="alert" style={{ marginBottom: 12 }}>
+            <b>Program yarın başlıyor.</b> Gün 1 = 2 Eylül Çarşamba.
+            Bugün hazırlık günü: Apple Watch EKG baseline kaydı, ilaç kayıtları,
+            sabah kilo ölçümü. Aşağıdaki liste yarının planı.
+          </div>
+        )}
         {tab === 'today' && <Today day={day} onChangeDay={setDay} today={today} />}
         {tab === 'training' && <Training day={day} />}
         {tab === 'vitals' && <Vitals day={day} />}
