@@ -24,9 +24,9 @@ export default function App() {
       <div className="scroll">
         {notStarted && (
           <div className="alert" style={{ marginBottom: 12 }}>
-            <b>Program yarın başlıyor.</b> Gün 1 = 2 Eylül Çarşamba.
-            Bugün hazırlık günü: Apple Watch EKG baseline kaydı, ilaç kayıtları,
-            sabah kilo ölçümü. Aşağıdaki liste yarının planı.
+            <b>Program 3 Eylül Perşembe başlıyor.</b> Bugün hazırlık:
+            Apple Watch bildirimleri (düşük nabız 45, uyku apnesi), 8 ilaç kaydı,
+            sabah kilo ölçümü. Aşağıdaki liste Gün 1'in planı.
           </div>
         )}
         {tab === 'today' && <Today day={day} onChangeDay={setDay} today={today} />}
