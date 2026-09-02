@@ -77,8 +77,10 @@ export default function Today({ day, onChangeDay, today }: Props) {
   const alerts: Array<{ text: string; danger?: boolean }> = [];
   if (day >= 1 && day <= 3)
     alerts.push({ text: '<b>Kan tahlili penceresi açık.</b> Gün 1-3 hâlâ ≈baseline sayılır. Gün 7’den sonra "nereden başladım" bilgisi kaybolur.' });
-  if ([7, 14, 21, 28, 30].includes(day))
-    alerts.push({ text: `<b>Bugün kan tahlili günü.</b> ${day === 30 ? 'Fosfor MUTLAKA.' : 'Na, K, Mg, fosfor, kreatinin.'}` });
+  // Tahlil günleri 7/14/21 yerine 6/13/20: 3 Eylül başlangıçta bunlar SALI = Musa'nın
+  // izinli günü. Çarşamba olsalardı mesai öncesi aç karnına koşturmaca olurdu.
+  if ([6, 13, 20, 30].includes(day))
+    alerts.push({ text: `<b>Bugün kan tahlili günü.</b> ${day === 30 ? 'Fosfor MUTLAKA — son gün.' : 'Na, K, Mg, fosfor, kreatinin. ASM\'de EKG de iste (QT için).'}` });
   if (day >= 7 && day <= 9)
     alerts.push({ text: '<b>Elektrolit stoğu bitiyor.</b> Yeni kavanozlar geldi mi?' });
   if (week?.critical)

@@ -6,9 +6,9 @@
  *   Klinik denetim sonradan refeeding'i 15 GÜNE çıkardı (1-15 Ekim).
  *   10 Ekim artık refeeding'in ORTASI — elektrolit kayması sürüyor.
  *   → Ekim rampası 7 gün kaydırıldı:
- *       Aktivasyon Seti  : gün 44-45 (15-16 Ekim, refeeding son 2 günü)
- *       5 şartlı kapı    : gün 46   (17 Ekim, refeeding biter)
- *       İlk gerçek seans : gün 47   (18 Ekim Paz) = C seansı (en kısa)
+ *       Aktivasyon Seti  : gün 44-45 (16-17 Ekim, refeeding son 2 günü)
+ *       5 şartlı kapı    : gün 46   (18 Ekim, refeeding biter)
+ *       İlk gerçek seans : gün 47   (19 Ekim Pzt) = A seansı (izinli gün)
  *       Sonra Pzt=A, Salı=B → normal bölünme
  */
 
@@ -227,22 +227,22 @@ const SEPT: Record<number, TrainingDay> = {
   3:  { blocks: ['M', 'N'], mMin: 10 },
   4:  { blocks: ['W', 'M'], walkMin: 15, mMin: 8, pulseCap: 110 },
   5:  { blocks: ['W', 'K'], walkMin: 20, pulseCap: 110 },
-  6:  { blocks: [], rest: true, note: 'Tam dinlenme + esneme 10 dk' },
-  7:  { blocks: ['W', 'K', 'M'], walkMin: 15, mMin: 8, pulseCap: 110, note: 'KAN TAHLİLİ' },
+  6:  { blocks: [], rest: true, note: 'Tam dinlenme + esneme 10 dk · KAN TAHLİLİ (izinli gün)' },
+  7:  { blocks: ['W', 'K', 'M'], walkMin: 15, mMin: 8, pulseCap: 110 },
   8:  { blocks: ['W', 'K', 'M'], walkMin: 20, mMin: 8, pulseCap: 110 },
   9:  { blocks: ['M', 'N'], mMin: 10 },
   10: { blocks: ['W'], walkMin: 25, pulseCap: 110, note: 'Yorgunsan 2 × 12 dk böl' },
   11: { blocks: ['M'], mMin: 12, note: 'M Bloğu + duvarda bacak yukarı' },
   12: { blocks: ['W', 'K'], walkMin: 25, pulseCap: 110, note: 'Zirve hafta — daha fazla artırma' },
-  13: { blocks: [], rest: true, note: 'Tam dinlenme + esneme 10 dk' },
-  14: { blocks: ['W', 'M'], walkMin: 20, mMin: 8, pulseCap: 110, note: 'KAN TAHLİLİ · bugünden sonra K Bloğu BİTER' },
+  13: { blocks: [], rest: true, note: 'Tam dinlenme · KAN TAHLİLİ (izinli gün)' },
+  14: { blocks: ['W', 'M'], walkMin: 20, mMin: 8, pulseCap: 110, note: 'Bugünden sonra K Bloğu BİTER' },
   15: { blocks: ['W'], walkMin: 20, pulseCap: 100, neuro: true, note: 'Nörolojik öz-kontrol başlar' },
   16: { blocks: ['M', 'N'], mMin: 10, neuro: true },
   17: { blocks: ['W'], walkMin: 20, pulseCap: 100, neuro: true },
   18: { blocks: ['M'], mMin: 12, neuro: true },
   19: { blocks: ['W'], walkMin: 20, pulseCap: 100, neuro: true },
-  20: { blocks: [], rest: true, neuro: true, note: 'Tam dinlenme' },
-  21: { blocks: ['W', 'M'], walkMin: 15, mMin: 8, pulseCap: 100, neuro: true, note: 'KAN TAHLİLİ' },
+  20: { blocks: [], rest: true, neuro: true, note: 'Tam dinlenme · KAN TAHLİLİ (izinli gün)' },
+  21: { blocks: ['W', 'M'], walkMin: 15, mMin: 8, pulseCap: 100, neuro: true },
   22: { blocks: ['W'], walkMin: 20, pulseCap: 100, neuro: true },
   23: { blocks: ['M', 'N'], mMin: 10, neuro: true },
   24: { blocks: ['W'], walkMin: 15, pulseCap: 100, neuro: true },
@@ -251,7 +251,7 @@ const SEPT: Record<number, TrainingDay> = {
   27: { blocks: [], rest: true, neuro: true, note: 'Tam dinlenme' },
   28: { blocks: ['M', 'N'], mMin: 10, neuro: true, note: 'Oruç sonrası plan hazır olmalı' },
   29: { blocks: ['M', 'N'], mMin: 10, neuro: true, note: 'Sadece M + N' },
-  30: { blocks: [], rest: true, neuro: true, note: 'HAREKET YOK. Yatarak esneme, duvarda bacak yukarı 8 dk. KAN TAHLİLİ + FOSFOR ŞART' },
+  30: { blocks: [], rest: true, neuro: true, note: 'HAREKET YOK. Yatarak esneme 8 dk. SON GÜN — KAN TAHLİLİ + FOSFOR ŞART' },
 };
 
 /* ─────────── EKİM-KASIM SEANSLARI ─────────── */

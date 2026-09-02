@@ -1,6 +1,6 @@
 /**
  * Tarih ↔ program günü dönüşümü.
- * Gün 1 = 2 Eylül 2026 (Çarşamba). Yerel saat kullanılır — UTC kayması olmaz.
+ * Gün 1 = 3 Eylül 2026 (Perşembe). Yerel saat kullanılır — UTC kayması olmaz.
  */
 
 import { START_DATE } from '../data/phases';
