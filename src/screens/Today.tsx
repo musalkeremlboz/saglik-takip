@@ -77,9 +77,9 @@ export default function Today({ day, onChangeDay, today }: Props) {
   const alerts: Array<{ text: string; danger?: boolean }> = [];
   if (day >= 1 && day <= 3)
     alerts.push({ text: '<b>Kan tahlili penceresi açık.</b> Gün 1-3 hâlâ ≈baseline sayılır. Gün 7’den sonra "nereden başladım" bilgisi kaybolur.' });
-  // Tahlil günleri 7/14/21 yerine 6/13/20: 3 Eylül başlangıçta bunlar SALI = Musa'nın
-  // izinli günü. Çarşamba olsalardı mesai öncesi aç karnına koşturmaca olurdu.
-  if ([6, 13, 20, 30].includes(day))
+  // Tahlil günleri 5/12/19: 4 Eylül başlangıçta bunlar SALI (8/15/22 Eylül) = Musa'nın
+  // izinli günü. (3 Eylül başlangıcında 6/13/20 idi; bir gün kaydı, takvim tarihi aynı kaldı.)
+  if ([5, 12, 19, 30].includes(day))
     alerts.push({ text: `<b>Bugün kan tahlili günü.</b> ${day === 30 ? 'Fosfor MUTLAKA — son gün.' : 'Na, K, Mg, fosfor, kreatinin. ASM\'de EKG de iste (QT için).'}` });
   if (day >= 7 && day <= 9)
     alerts.push({ text: '<b>Elektrolit stoğu bitiyor.</b> Yeni kavanozlar geldi mi?' });
@@ -87,9 +87,11 @@ export default function Today({ day, onChangeDay, today }: Props) {
     alerts.push({ text: `<b>${week.label}.</b> ${week.note}` });
   if (day === 28 || day === 29)
     alerts.push({ text: '<b>Refeeding hazırlığı.</b> Termos, tiamin, alarm, mesai arkadaşına haber.' });
-  if (day === 31 || day === 32)
-    alerts.push({ danger: true, text: '<b>Refeeding + iş günü.</b> Eve 23:00 geliyorsun. Termos protokolü. İlk lokmadan ÖNCE tiamin. Elektroliti DÜŞÜRME.' });
-  if (day >= 31 && day <= 45 && day > 32)
+  if (day === 31)
+    alerts.push({ danger: true, text: '<b>Refeeding gün 1 — iş günü (eve 18:00).</b> Termos protokolü. İlk lokmadan ÖNCE tiamin 100 mg. Elektroliti DÜŞÜRME.' });
+  if (day === 32 || day === 33)
+    alerts.push({ danger: true, text: '<b>Refeeding ilk 72 saat — İZİNLİ gün.</b> Evde kal, küçük porsiyon, 2 saatte bir. Tiamin her öğün öncesi. Günde >1 kg artış = sıvı, panik yok.' });
+  if (day >= 31 && day <= 45 && day > 33)
     alerts.push({ text: '<b>Refeeding sürüyor.</b> Kalori açığı YOK. Günde >1 kg artış = sıvı tutulumu.' });
 
   return (

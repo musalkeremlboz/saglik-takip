@@ -6,10 +6,12 @@
  *   Klinik denetim sonradan refeeding'i 15 GÜNE çıkardı (1-15 Ekim).
  *   10 Ekim artık refeeding'in ORTASI — elektrolit kayması sürüyor.
  *   → Ekim rampası 7 gün kaydırıldı:
- *       Aktivasyon Seti  : gün 44-45 (16-17 Ekim, refeeding son 2 günü)
- *       5 şartlı kapı    : gün 46   (18 Ekim, refeeding biter)
- *       İlk gerçek seans : gün 47   (19 Ekim Pzt) = A seansı (izinli gün)
+ *       Aktivasyon Seti  : gün 44-45 (17-18 Ekim, refeeding son 2 günü)
+ *       5 şartlı kapı    : gün 46   (19 Ekim Pzt, izinli — refeeding biter)
+ *       İlk gerçek seans : gün 47   (20 Ekim Salı, izinli) = B seansı
  *       Sonra Pzt=A, Salı=B → normal bölünme
+ *   4 Eylül başlangıcı (2026-09-03): her şey 1 gün kaydı; tahlil/dinlenme günleri
+ *   Salı'da kalsın diye 5/12/19'a alındı (eski 6/13/20 ile yer değiştirdi).
  */
 
 export type BlockId = 'W' | 'M' | 'N' | 'K';
@@ -226,22 +228,22 @@ const SEPT: Record<number, TrainingDay> = {
   2:  { blocks: ['W', 'M'], walkMin: 15, mMin: 8, pulseCap: 110 },
   3:  { blocks: ['M', 'N'], mMin: 10 },
   4:  { blocks: ['W', 'M'], walkMin: 15, mMin: 8, pulseCap: 110 },
-  5:  { blocks: ['W', 'K'], walkMin: 20, pulseCap: 110 },
-  6:  { blocks: [], rest: true, note: 'Tam dinlenme + esneme 10 dk · KAN TAHLİLİ (izinli gün)' },
+  5:  { blocks: [], rest: true, note: 'Tam dinlenme + esneme 10 dk · KAN TAHLİLİ (izinli gün)' },
+  6:  { blocks: ['W', 'K'], walkMin: 20, pulseCap: 110 },
   7:  { blocks: ['W', 'K', 'M'], walkMin: 15, mMin: 8, pulseCap: 110 },
   8:  { blocks: ['W', 'K', 'M'], walkMin: 20, mMin: 8, pulseCap: 110 },
   9:  { blocks: ['M', 'N'], mMin: 10 },
   10: { blocks: ['W'], walkMin: 25, pulseCap: 110, note: 'Yorgunsan 2 × 12 dk böl' },
   11: { blocks: ['M'], mMin: 12, note: 'M Bloğu + duvarda bacak yukarı' },
-  12: { blocks: ['W', 'K'], walkMin: 25, pulseCap: 110, note: 'Zirve hafta — daha fazla artırma' },
-  13: { blocks: [], rest: true, note: 'Tam dinlenme · KAN TAHLİLİ (izinli gün)' },
+  12: { blocks: [], rest: true, note: 'Tam dinlenme · KAN TAHLİLİ (izinli gün)' },
+  13: { blocks: ['W', 'K'], walkMin: 25, pulseCap: 110, note: 'Zirve hafta — daha fazla artırma' },
   14: { blocks: ['W', 'M'], walkMin: 20, mMin: 8, pulseCap: 110, note: 'Bugünden sonra K Bloğu BİTER' },
   15: { blocks: ['W'], walkMin: 20, pulseCap: 100, neuro: true, note: 'Nörolojik öz-kontrol başlar' },
   16: { blocks: ['M', 'N'], mMin: 10, neuro: true },
   17: { blocks: ['W'], walkMin: 20, pulseCap: 100, neuro: true },
   18: { blocks: ['M'], mMin: 12, neuro: true },
-  19: { blocks: ['W'], walkMin: 20, pulseCap: 100, neuro: true },
-  20: { blocks: [], rest: true, neuro: true, note: 'Tam dinlenme · KAN TAHLİLİ (izinli gün)' },
+  19: { blocks: [], rest: true, neuro: true, note: 'Tam dinlenme · KAN TAHLİLİ (izinli gün)' },
+  20: { blocks: ['W'], walkMin: 20, pulseCap: 100, neuro: true },
   21: { blocks: ['W', 'M'], walkMin: 15, mMin: 8, pulseCap: 100, neuro: true },
   22: { blocks: ['W'], walkMin: 20, pulseCap: 100, neuro: true },
   23: { blocks: ['M', 'N'], mMin: 10, neuro: true },
@@ -343,9 +345,9 @@ export const START_STEP: Record<string, number> = {
 export const HITS_TO_ADVANCE = 2;
 
 /** Kaydırılmış Ekim rampası — 15 günlük refeeding'e göre */
-export const ACTIVATION_DAYS = [44, 45];   // 14-15 Ekim
-export const GATE_DAY = 46;                 // 16 Ekim
-export const FIRST_SESSION_DAY = 47;        // 17 Ekim Cumartesi
+export const ACTIVATION_DAYS = [44, 45];   // 17-18 Ekim
+export const GATE_DAY = 46;                 // 19 Ekim Pzt (izinli)
+export const FIRST_SESSION_DAY = 47;        // 20 Ekim Salı (izinli)
 
 /** Ekim ilk 3 hafta set sayısı rampası (gün 47'den itibaren hafta indeksi) */
 export function setsForDay(day: number): number {

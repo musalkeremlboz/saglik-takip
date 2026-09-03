@@ -1,7 +1,7 @@
 /**
  * Faz tanımları — programın omurgası.
  * Tarihler Musa'nın 2026-08-31 kararlarına göre kesinleşti:
- *   Oruç 1-30 Eylül (30 gün) · Refeeding 1-15 Ekim (15 gün) · Kilo verme 16 Ekim-30 Kasım
+ *   Oruç 4 Eylül-3 Ekim (30 gün) · Refeeding 4-18 Ekim (15 gün) · Kilo verme 19 Ekim-3 Aralık
  */
 
 export type PhaseId = 'oruc' | 'refeeding' | 'kilo-verme';
@@ -10,17 +10,17 @@ export interface Phase {
   id: PhaseId;
   name: string;
   short: string;
-  startDay: number; // program günü (1 = 3 Eylül 2026)
+  startDay: number; // program günü (1 = 4 Eylül 2026)
   endDay: number;
   color: string;
   description: string;
 }
 
 /**
- * Program başlangıcı: 3 EYLÜL 2026, Perşembe. Yerel saat (Europe/Istanbul).
- * (1 Eylül → 2 Eylül → 3 Eylül; Musa'nın kararı, 2026-09-01.)
+ * Program başlangıcı: 4 EYLÜL 2026, Cuma. Yerel saat (Europe/Istanbul).
+ * (1 → 2 → 3 → 4 Eylül; Musa'nın kararı, 2026-09-03 akşamı.)
  */
-export const START_DATE = new Date(2026, 8, 3);
+export const START_DATE = new Date(2026, 8, 4);
 
 export const PHASES: Phase[] = [
   {

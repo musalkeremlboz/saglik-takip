@@ -24,7 +24,7 @@ export default function App() {
       <div className="scroll">
         {notStarted && (
           <div className="alert" style={{ marginBottom: 12 }}>
-            <b>Program 3 Eylül Perşembe başlıyor.</b> Bugün hazırlık:
+            <b>Program 4 Eylül Cuma başlıyor.</b> Bugün hazırlık:
             Apple Watch bildirimleri (düşük nabız 45, uyku apnesi), 8 ilaç kaydı,
             sabah kilo ölçümü. Aşağıdaki liste Gün 1'in planı.
           </div>
